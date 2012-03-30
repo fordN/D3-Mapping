@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>MINI Sales</title>
+    <script type="text/javascript" src="../../../d3.js"></script>
+    <script type="text/javascript" src="../../../d3.geo.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="jquery.tipsy.js"></script>
+    <link href="tipsy.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+
+	body {
+		margin: 1;
+	}
+	#viz {
+		width: 100%;
+	  	height: 100%;
+	}
+	svg {
+	  width: 100%;
+	  height: 100%;
+	  background-color: #66BDCC;
+	  
+	}
+	
+	#toptitle {
+	  font-size: 200%;
+	  font-weight: bold;
+	  fill: #fff;
+	  font-family: "Arial";
+	}
+	
+	
+	#legend {
+	  font-size: 75%;
+	  font-weight: bold;
+	  fill: #fff;
+	  font-family: "Arial";
+	}
+	
+	#legendtitle {
+	  font-size: 100%;
+	  font-weight: bold;
+	  fill: #fff;
+	  font-family: "Arial";
+	}
+	
+	#legend circle {
+	  fill: #970C13;
+	  fill-opacity: .8;
+	  stroke: #fff;
+	  stroke-width: 1.5px;
+	  stroke-opacity:.7;
+	}
+	
+	
+	#states path {
+	  fill: #ccc;
+	  fill-opacity:.9;
+	  stroke: #fff;
+	  stroke-width: 0.5px;
+	}
+	
+	#state-centroids circle {
+	  fill: #970C13;
+	  fill-opacity: .8;
+	  stroke: #fff;
+	  stroke-width: 1.5px;
+	  stroke-opacity:.7;
+	}
+	
+	text {
+	  
+	}
+
+    </style>
+  </head>
+  <body>
+  	<div id="viz"></div>
+    <script type="text/javascript">
+
+	// The radius scale for the centroids.
+	var r = d3.scale.sqrt()
+	    .domain([20, 1400])
+	    .range([0, 15]);
+	    
+	// Our projection.
+	var xy = d3.geo.albersUsa()
+		.scale(1000).translate([600,300]);
+		
+	var legendsales = 2000;
+	var lcircle = r(legendsales);
+	var padding = lcircle*.5;
+	var ycircle = lcircle + padding;
+	var xcircle = lcircle/2 + padding/2;
+	
+	var svg = d3.select("#viz").append("svg:svg");
+	svg.append("g").attr("id", "legend")
+		.attr("transform", "translate(950,340)");
+	svg.select("#legend")
+		.append("circle")
+		.attr("transform", "translate(" + xcircle + "," + ycircle + ")")
+	    .attr("r", lcircle);
+	svg.select("#legend")
+		.append("text")
+		.attr("transform", "translate(" + xcircle*3 + "," + ycircle*1.1 + ")")
+		.text(legendsales + " cars");
+	svg.select("#legend")
+	    .append("circle")
+	    .attr("transform", "translate(" + xcircle + "," + ycircle*2.5 + ")")
+	    .attr("r", lcircle/2);
+	svg.select("#legend")
+		.append("text")
+		.attr("transform", "translate(" + xcircle*3 + "," + ycircle*2.7 + ")")
+		.text(legendsales/2 + " cars");
+	
+	   
+		
+	svg.attr("viewBox", "0 0 1200 600");
+	svg.append("text")
+		.attr("id", "toptitle")
+		.attr("transform", "translate(425,70)")
+		.text("MINI Sales 2011-12");
+		
+	svg.append("g").attr("id", "states");
+	svg.append("g").attr("id", "state-centroids");
+	
+	
+		
+
+	d3.json("us-states.json", function(collection) {
+	  svg.select("#states")
+	    .selectAll("path")
+	      .data(collection.features)
+	    .enter().append("path")
+	      .attr("d", d3.geo.path().projection(xy));
+	});
+	
+	d3.json("state_sales_11-12.json", function(collection) {
+	  svg.select("#state-centroids")
+	    .selectAll("circle")
+	      .data(collection.features
+	      .sort(function(a, b) { return b.properties.sales - a.properties.sales; }))
+	    .enter().append("svg:circle")
+	      .attr("transform", function(d) { return "translate(" + xy(d.geometry.coordinates) + ")"; })
+	      .attr("r", 0)
+	    .transition()
+	      .duration(1000)
+	      .delay(function(d, i) { return i * 50; })
+	      .attr("r", function(d) { return r(d.properties.sales); });
+	      
+	   $('svg circle').tipsy({
+		gravity: 'w',
+		html:true,
+		title: function() {
+			var d = this.__data__, s = d.properties.sales, t = d.properties.name;
+			return t + ': ' + s;
+		}
+	});
+	});
+	
+	
+	
+	
+
+    </script>
+  </body>
+</html>
